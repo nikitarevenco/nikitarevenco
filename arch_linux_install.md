@@ -310,11 +310,11 @@ grub-install --efi-directory=/boot/efi
 nvim /etc/default/grub
 ```
 
-Add in the following kernel parameters
+Append the following kernel parameters to the env variable `GRUB_CMDLINE_LINUX_DEFAULT`
 You can fill in the `<uuid>` by typing `:r !blkid /dev/a...3`
 
 ```bash
-GRUB_CMDLINE_LINUX="root=/dev/mapper/arch-root cryptdevice=UUID=<uuid>:luks_lvm"
+root=/dev/mapper/arch-root cryptdevice=UUID=<uuid>:luks_lvm
 ```
 
 ### Keyfile
