@@ -339,6 +339,7 @@ Change permissions on these
 
 ```bash
 chmod 000 /secure/*
+chmod 600 /boot/initramfs-linux*
 ```
 
 Add to partitions
@@ -375,13 +376,13 @@ You can get `<uuid>` by `:r !blkid /dev/b...1`
 arch-home      UUID=<uuid>    /secure/home_keyfile.bin
 ```
 
+### Grub
+
 Reload linux
 
 ```bash
 mkinitcpio -p linux
 ```
-
-### Grub
 
 Create grub config
 
