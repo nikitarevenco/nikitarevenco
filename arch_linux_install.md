@@ -283,7 +283,7 @@ mount /dev/a...1 /mnt/boot/efi
 ### Install arch
 
 ```bash
-pacstrap -K /mnt base base-devel linux linux-firmware neovim btrfs-progs lvm2 grub efibootmgr zsh networkmanager
+pacstrap -K /mnt base base-devel linux linux-firmware neovim btrfs-progs lvm2 grub efibootmgr zsh networkmanager sof-firmware
 ```
 
 Load the file table
@@ -508,6 +508,12 @@ Then
 
 ```
 yay -S r8168-dkms
+```
+
+We also need `linux-headers`
+
+```
+pacman -S linux-headers
 ```
 
 Replace r8169 with r8168-dkms
