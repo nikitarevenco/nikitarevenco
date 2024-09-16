@@ -28,6 +28,12 @@ gpg --verify archlinux.iso.sig
 
 Open Balena Etcher, select your `.iso` and your drive, and flash.
 
+Or just use `cat` (assuming you want to flash to `/dev/sdc`):
+
+```
+cat path/to.iso > /dev/sdc
+```
+
 ## Installing Arch
 
 Boot from the USB stick into the Arch ISO installer.
@@ -85,7 +91,7 @@ $ gdisk /dev/block_name
 
 Inside of gdisk, you can print the table using the `p` command.
 
-To create a new partition use the `n` command. The below table shows
+To create a new partition use the `n` command. `d` to delete. The below table shows
 the disk setup I have for my primary drive
 
 | partition | first sector | last sector | code |
@@ -277,7 +283,7 @@ mount /dev/a...1 /mnt/boot/efi
 ### Install arch
 
 ```bash
-pacstrap -K /mnt base base-devel linux linux-firmware neovim btrfs-progs lvm2 grub efibootmgr zsh
+pacstrap -K /mnt base base-devel linux linux-firmware neovim btrfs-progs lvm2 grub efibootmgr zsh networkmanager
 ```
 
 Load the file table
@@ -419,6 +425,12 @@ Enable timesyncd
 systemctl enable systemd-timesyncd.service
 ```
 
+Network manager
+
+```bash
+systemctl enable NetworkManager.service
+```
+
 #### Locale
 
 Uncomment the UTF8 lang you want:
@@ -479,4 +491,29 @@ Uncomment this line:
 exit
 umount -R /mnt
 reboot now
+```
+
+### Troubleshooting
+
+#### I cannot connect to wifi
+
+Maybe you are using the `r8169` driver, try the `r8168-dkms` driver
+
+Install yay
+```
+sudo pacman -S --needed git base-devel && git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si
+```
+
+Then
+
+```
+yay -S r8168-dkms
+```
+
+Replace r8169 with r8168-dkms
+
+```
+rmmod r8169
+echo "blacklist r8169" | sudo tee -a /etc/modprobe.d/blacklist.conf
+modprobe r8168
 ```
