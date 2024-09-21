@@ -8,11 +8,15 @@ Flash iso file on a drive e.g. `/dev/sdc`:
 sudo cp path/to.iso /dev/sdc
 ```
 
-- `lspci`: Display information about each PCI bus connected to the system
+### Debugging
+
+Some useful commands:
+
+- `ip link`: display state of network interfaces
+- `dmesg`: shows kernel messages
+- `lspci -k`: display information about each pci bus connected to the system
 
 ### How to install a package on an offline system
-
-
 
 ```bash
 sudo mkdir /var/cache/pacman/custom-pkgs

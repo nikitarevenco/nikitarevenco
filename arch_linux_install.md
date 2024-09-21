@@ -5,7 +5,6 @@
 ### Download
 
 1. Download the `.iso`, `.iso.sig`, `b2sums.txt`, and `sha256sums.txt` files from the Arch Linux install page (Arch Linux > Download > Worldwide > geo.mirror.pkgbuild.com).
-2. Download [Balena Etcher](https://etcher.balena.io/).
 
 ### Security
 
@@ -26,12 +25,10 @@ gpg --verify archlinux.iso.sig
 
 ### Flashing
 
-Open Balena Etcher, select your `.iso` and your drive, and flash.
-
-Or just use `cat` (assuming you want to flash to `/dev/sdc`):
+Just use `cp` (assuming you want to flash to `/dev/sdc`):
 
 ```
-cat path/to.iso > /dev/sdc
+sudo cp path/to.iso /dev/sdc
 ```
 
 ## Installing Arch
@@ -61,18 +58,6 @@ station foo connect bar
 # Verify internet connection, ensure you receive responses before proceeding
 ping -c 4 archlinux.org
 exit
-```
-
-#### Override Your Hard Drive with Random Data (Optional):
-
-This will completely erase all data on the hard drives.
-
-```bash
-lsblk # Find the drives you want to override, e.g., `foo` and `bar`
-
-# Process will take about 8 hours
-dd if=/dev/urandom of=/dev/foo bs=4096 status=progress
-dd if=/dev/urandom of=/dev/bar bs=4096 status=progress
 ```
 
 ### Setting Up the Partitions
@@ -155,7 +140,7 @@ vgcreate arch /dev/mapper/luks_lvm
 Create a volume for your swap space. A good size for this is your RAM size (find out with `free -h`) + 2GB.
 
 ```bash
-lvcreate -n swap -L 66G arch
+lvcreate -n swap -L 18G arch
 ```
 
 Next you have a few options depending on your setup
@@ -165,7 +150,7 @@ Next you have a few options depending on your setup
 If you have a single disk, you can either have a single volume for your root
 and home, or two separate volumes.
 
-#### Single volume
+#### No home partition
 
 Single volume is the most straightforward. To do this, just use the entire
 disk space for your root volume
@@ -174,7 +159,7 @@ disk space for your root volume
 lvcreate -n root -l +100%FREE arch
 ```
 
-#### Two volumes
+#### With home partition
 
 For two volumes, you'll need to estimate the max size you want for either your
 root or home volumes. With a root volume of 200G, this looks like:
@@ -187,14 +172,6 @@ Then use remaining disk space for home
 
 ```bash
 lvcreate -n home -l +100%FREE arch
-```
-
-### Dual Disk
-
-If you have two disks, then create a single volume on your LVM disk.
-
-```bash
-lvcreate -n root -l +100%FREE arch
 ```
 
 ## Filesystems
@@ -283,7 +260,7 @@ mount /dev/a...1 /mnt/boot/efi
 ### Install arch
 
 ```bash
-pacstrap -K /mnt base base-devel linux linux-firmware neovim btrfs-progs lvm2 grub efibootmgr zsh networkmanager sof-firmware
+pacstrap -K /mnt base base-devel linux linux-firmware neovim btrfs-progs lvm2 grub efibootmgr zsh sof-firmware
 ```
 
 Load the file table
@@ -428,7 +405,7 @@ systemctl enable systemd-timesyncd.service
 Network manager
 
 ```bash
-systemctl enable NetworkManager.service
+pacman -S networkmanager && systemctl enable NetworkManager.service
 ```
 
 #### Locale
@@ -441,6 +418,12 @@ nvim /etc/locale.gen
 
 ```bash
 locale-gen
+```
+
+If you changed your keyboard layout:
+
+```bash
+echo "KEYMAP=us" > /etc/vconsole.conf
 ```
 
 ```bash
@@ -485,7 +468,60 @@ Uncomment this line:
 %wheel ALL=(ALL:ALL) ALL
 ```
 
-## Reboot
+### Reflector
+
+Edit `/etc/xdg/reflector/reflector.conf` to use this config:
+
+```sh
+--save /etc/pacman.d/mirrorlist
+--protocol https
+--country "United Kingdom"
+--latest 5
+--sort rate
+```
+Enable reflector service:
+
+```sh
+systemctl enable --now reflector.service
+systemctl enable --now reflector.timer
+```
+
+### Microcode
+
+Install amd or intel microcode depending on which processor you use (find out with `lscpu`):
+
+```sh
+pacman -S amd-ucode # or intel-ucode
+```
+
+### Firewall
+
+```bash
+pacman -S ufw
+```
+
+```bash
+systemctl enable --now ufw.service
+ufw enable
+ufw limit SSH
+ufw logging off
+```
+
+### Trim
+
+If you are using SSD, setup trim
+
+```bash
+systemctl enable fstrim.timer
+```
+
+### Secure boot
+
+Before creating new keys and modifying EFI variables, it is advisable to backup the current variables, so that they may be restored in case of error.
+
+```bash
+pacman -S efitools && for var in PK KEK db dbx ; do efi-readvar -v $var -o old_${var}.esl ; done
+```
 
 ```bash
 exit
@@ -493,33 +529,55 @@ umount -R /mnt
 reboot now
 ```
 
-### Troubleshooting
+Now reboot into `UEFI` and put secure boot into **SETUP MODE**. Refer to your motherboard manufaturer's guide on how to do that.
 
-#### I cannot connect to wifi
+For most systems, you can do this by, just going into **BOOT** tab, **enabling secure boot**, go to **SECURITY** tab and do **Erase all secure boot settings**.
 
-Maybe you are using the `r8169` driver, try the `r8168-dkms` driver
+Now save changes and exit.
 
-Install yay
-```
-sudo pacman -S --needed git base-devel && git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si
-```
+After enabling Setup Mode, reboot again, which allows the system to clear any previous Secure Boot keys.
 
-Then
+Now when booting into **Arch Linux** you'll be prompted to enter the passphrase to your LUKS partition.
 
-```
-yay -S r8168-dkms
-```
+Enter it and boot into the system. Login as **root**.
 
-We also need `linux-headers`
-
-```
-pacman -S linux-headers
+```bash
+pacman -S sbctl
 ```
 
-Replace r8169 with r8168-dkms
+Check status
 
+```bash
+sbctl status
 ```
-rmmod r8169
-echo "blacklist r8169" | sudo tee -a /etc/modprobe.d/blacklist.conf
-modprobe r8168
+
+You should see that sbctl is not installed and secure boot is disabled.
+
+```bash
+sbctl create-keys
+sbctl enroll-keys -m
+```
+
+Check status again
+
+```bash
+sbctl status
+```
+
+sbctl should be installed now, but secure boot will not work until the boot files have been signed with the keys you just created. 
+
+```bash
+sbctl verify
+```
+
+Now sign all the unsigned files. Usually the kernel and the boot loader need to be signed. For example: 
+
+```bash
+sbctl sign -s /boot/vmlinuz-linux
+sbctl sign -s /boot/EFI/BOOT/BOOTX64.EFI
+# ...
+```
+
+```bash
+mkinitcpio -P
 ```
