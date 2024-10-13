@@ -18,7 +18,7 @@
 - `gx` opens link under cursor
 - `gf` opens relative or absolute file path under cursor
 - `CTRL v` visual block mode
-- `J` join line 
+- `J` join line
 
 - `dk` and `dj` to delete 2 lines easily
 - `yib` is the same as `yi(` but easier to type
@@ -81,3 +81,7 @@
 - `:g` execute command on each line that match pattern, e.g. `:g/^#/d` delete all comments from bash file
 - `:%s` substitute, e.g. `:%s/foo/bar/g`
 - `:g/foo/s/bar/baz/g` substitute bar with baz on all lines that contain foo
+
+- pipe output of commands into `| nvim`, super useful
+- `/\%V` will search inside visual selection
+- If clipboard register is `unnamedplus`, stuff we copy using system clipboard (not in vim) will also always be saved in the `"*` register, which is handy. e.g. we `dd` a line, it won't override what we copied!
