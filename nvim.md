@@ -85,3 +85,7 @@
 - pipe output of commands into `| nvim`, super useful
 - `/\%V` will search inside visual selection
 - If clipboard register is `unnamedplus`, stuff we copy using system clipboard (not in vim) will also always be saved in the `"*` register, which is handy. e.g. we `dd` a line, it won't override what we copied!
+
+- use `dj` and `dk` to delete the current line and the line above/below
+- `<C-f>` edit ex mode in insert and normal modes
+- use `_` instead of `^` because it takes to first character on line and accepts a motion for N lines back, and easier to reach
