@@ -15,6 +15,7 @@ Some useful commands:
 - `ip link`: display state of network interfaces
 - `dmesg`: shows kernel messages
 - `lspci -k`: display information about each pci bus connected to the system
+- `journalctl -b -1 -e`: info about the last second before the previous shutdown
 
 ### How to install a package on an offline system
 
